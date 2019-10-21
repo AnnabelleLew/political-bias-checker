@@ -114,12 +114,16 @@ def binary_cross_entropy(prediction, truth):
     # 1e-08 is used as a very small number to further prevent log(0)
     return torch.mean(truth * -torch.log(prediction + 1e-08) + (1 - truth) * -torch.log(1 - prediction + 1e-08))
 
-def train_nn(x_train, left_bias, right_bias):
+def train_nn(x_train, bias):
     # get input and output, or just input if it's not training
     # x_train = article text, in string format
     # y_train = an array of two values: a score for left leaning, and a score for right-leaning
-    left_val = left_bias / 5
-    right_val = right_bias / 5
+    left_val = 0
+    right_val = 0
+    if bias < 0:
+        left_val = (-bias) / 5
+    elif bias > 0:
+        right_val = bias / 5
     x_train = x_train.lower()
     y_train = np.ndarray((250,2))
     y_train[:,0] = left_val
