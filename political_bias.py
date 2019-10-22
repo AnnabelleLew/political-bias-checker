@@ -62,7 +62,7 @@ def words_to_code(tokens, sorted_words):
     return return_list
 
 @jit(nopython = True)
-def generate_word_by_context(codes, max_vocab_words=1000, max_context_words=1000, context_size=2, weight_by_distance=False):
+def generate_word_by_context(codes, max_vocab_words, max_context_words, context_size=2):
     # initialize 2d array of zeros (with dtype=np.float32 to reduce required memory)
     # of shape (max_vocab_words, max_context_words)
     matrix = np.zeros((max_vocab_words, max_context_words), dtype=np.float32)
@@ -72,16 +72,10 @@ def generate_word_by_context(codes, max_vocab_words=1000, max_context_words=1000
         if codes[i] < max_vocab_words:
             for word in range(1, context_size + 1):
                 if codes[word + i] < max_context_words:
-                    if weight_by_distance:
-                        matrix[codes[i]][codes[word + i]] += 1.0 / np.abs(word)
-                    else:
-                        matrix[codes[i]][codes[word + i]] += 1.0
+                    matrix[codes[i]][codes[word + i]] += 1.0 / np.abs(word)
             for word in range(1, context_size + 1):
                 if codes[i - word] < max_context_words:
-                    if weight_by_distance:
-                        matrix[codes[i]][codes[i - word]] += 1.0 / np.abs(word)
-                    else:
-                        matrix[codes[i]][codes[i - word]] += 1.0
+                    matrix[codes[i]][codes[i - word]] += 1.0 / np.abs(word)
     return matrix
 
 # SVD functions
@@ -140,7 +134,7 @@ def train_nn(x_train, bias):
 
     x_sorted = sort_words(x_bag)
     x_codes = words_to_code(x_bag, x_sorted)
-    x_contexts = generate_word_by_context(x_codes, max_vocab_words=50000, max_context_words=5000, context_size=4, weight_by_distance=True)
+    x_contexts = generate_word_by_context(x_codes, max_vocab_words=50000, max_context_words=5000, context_size=4)
     x_log = np.log10(1 + x_contexts, dtype="float32")
     x_vectors = reduce(x_log, n_components=200)
 
