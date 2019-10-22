@@ -1,5 +1,4 @@
 # imports
-import codecs
 from collections import defaultdict, Counter
 from nltk.tokenize import word_tokenize
 from numba import jit
