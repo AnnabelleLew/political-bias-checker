@@ -8,7 +8,6 @@ from pathlib import Path
 import pickle
 import re, string
 from sklearn.decomposition import TruncatedSVD, randomized_svd
-import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -71,7 +70,6 @@ def generate_word_by_context(codes, max_vocab_words=1000, max_context_words=1000
     matrix = np.zeros((max_vocab_words, max_context_words), dtype=np.float32)
 
     # slide window along sequence and count "center word code" / "context word code" co-occurrences
-    # Hint: let main loop index indicate the center of the window
     for i in range(context_size, len(codes) - context_size):
         if codes[i] < max_vocab_words:
             for word in range(1, context_size + 1):
@@ -91,20 +89,19 @@ def generate_word_by_context(codes, max_vocab_words=1000, max_context_words=1000
 # SVD functions
 def reduce(X, n_components, power=0.0):
     U, Sigma, VT = randomized_svd(X, n_components=n_components)
-    # note: TruncatedSVD always multiplies U by Sigma, but can tune results by just using U or raising Sigma to a power
     return U * (Sigma**power)
 
 # get embedding
 def get_embedding(dictionary, text):
-    """ Returns the word embedding for a given word, reshaping the word embedding array. """
+    #Returns the word embedding for a given word, reshaping the word embedding array.
     return dictionary[text][:,np.newaxis]
 
 # define accuracy and binary cross entropy
 def accuracy(predictions, truth):
     # np.mean(np.round(0.4) == 0)
     # >>> 1.0
-    #tries to see how close predictions are to the truth
-    #taking the mean will sum the amount of correct predictions and divide by total predictions returning accuracy
+    # tries to see how close predictions are to the truth
+    # taking the mean will sum the amount of correct predictions and divide by total predictions returning accuracy
     if isinstance(predictions, torch.Tensor):
         predictions = predictions.detach().numpy()
     return np.mean(1 - abs(predictions - truth.detach().numpy()))
@@ -140,7 +137,7 @@ def train_nn(x_train, bias):
     for i in range(250 - len(x_bag)):
         x_bag.append("")
 
-    # preprocessing part 2: get the word embeddings, add the bag of words to the word embeddings
+    # gets the word embeddings, add the bag of words to the word embeddings
     # turn words into code
     if Path("word_vectors_200.pkl").is_file():
         with open("word_vectors_200.pkl", mode="rb") as opened_file:
@@ -175,6 +172,7 @@ def train_nn(x_train, bias):
         except Exception as e:
             continue
 
+    # make a forward pass, then backprop and get accuracy
     arr = torch.tensor(np.swapaxes(arr, -2, -1)).float()
     prediction = model.forward(arr)
     truth = torch.tensor(y_train).float()
@@ -185,6 +183,7 @@ def train_nn(x_train, bias):
     optimizer.zero_grad()
     print("accuracy: " + str(acc))
 
+    # get and print bias
     predicted_left_bias = prediction.detach().numpy()[:,0]
     predicted_right_bias = prediction.detach().numpy()[:,1]
     print("left actual bias: " + str(np.mean(truth.detach().numpy()[:,0])*5))
