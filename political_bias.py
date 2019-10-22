@@ -1,6 +1,5 @@
 # imports
 from collections import defaultdict, Counter
-from nltk.tokenize import word_tokenize
 from numba import jit
 import numpy as np
 from pathlib import Path
@@ -138,23 +137,12 @@ def train_nn(x_train, bias):
 
     # gets the word embeddings, add the bag of words to the word embeddings
     # turn words into code
-    if Path("word_vectors_200.pkl").is_file():
-        with open("word_vectors_200.pkl", mode="rb") as opened_file:
-            x_dict = pickle.load(opened_file)
-    else:
-        x_dict = dict()
 
     x_sorted = sort_words(x_bag)
     x_codes = words_to_code(x_bag, x_sorted)
     x_contexts = generate_word_by_context(x_codes, max_vocab_words=50000, max_context_words=5000, context_size=4, weight_by_distance=True)
     x_log = np.log10(1 + x_contexts, dtype="float32")
     x_vectors = reduce(x_log, n_components=200)
-
-    for i in range(len(x_bag)):
-        x_dict[x_bag[i]] = x_vectors[i,:]
-
-    with open("word_vectors_200.pkl", mode="wb") as opened_file:
-        pickle.dump(x_dict, opened_file)
 
     # pull the model, else make a new one
     if Path("model.pt").is_file():
