@@ -62,7 +62,7 @@ def words_to_code(tokens, sorted_words):
     return return_list
 
 @jit(nopython = True)
-def generate_word_by_context(codes, max_vocab_words, max_context_words, context_size=2):
+def generate_word_by_context(codes, max_vocab_words, max_context_words, context_size):
     # initialize 2d array of zeros (with dtype=np.float32 to reduce required memory)
     # of shape (max_vocab_words, max_context_words)
     matrix = np.zeros((max_vocab_words, max_context_words), dtype=np.float32)
