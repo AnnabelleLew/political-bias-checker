@@ -124,7 +124,8 @@ def train_nn(x_train, bias):
         for line in r:
             stops += [i.strip() for i in line.split('\t')]
 
-    x_count = Counter(punctuation.sub('', x_train).lower().split())
+    x_ordered = punctuation.sub('', x_train).lower().split()
+    x_count = Counter(x_ordered)
     x_bag = to_bag([x_count], k=250, stop_words=stops)
     for i in range(250 - len(x_bag)):
         x_bag.append("")
@@ -133,10 +134,14 @@ def train_nn(x_train, bias):
     # turn words into code
 
     x_sorted = sort_words(x_bag)
-    x_codes = words_to_code(x_bag, x_sorted)
+    x_codes = words_to_code(x_bag, x_ordered)
     x_contexts = generate_word_by_context(x_codes, max_vocab_words=50000, max_context_words=5000, context_size=4)
     x_log = np.log10(1 + x_contexts, dtype="float32")
     x_vectors = reduce(x_log, n_components=200)
+    x_dict = dict()
+
+    for i in x_bag:
+        x_dict[x_bag] = x_vectors[i,:]
 
     # pull the model, else make a new one
     if Path("model.pt").is_file():
